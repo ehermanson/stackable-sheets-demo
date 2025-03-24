@@ -53,8 +53,8 @@ export default function Home() {
                 <Slider
                   defaultValue={[baseWidth]}
                   min={300}
-                  max={800}
-                  step={10}
+                  max={1500}
+                  step={1}
                   onValueChange={(value: number[]) => setBaseWidth(value[0])}
                   className="w-full"
                 />
@@ -68,7 +68,7 @@ export default function Home() {
                 <Slider
                   defaultValue={[widthIncrement]}
                   min={0}
-                  max={50}
+                  max={200}
                   step={1}
                   onValueChange={(value: number[]) =>
                     setWidthIncrement(value[0])

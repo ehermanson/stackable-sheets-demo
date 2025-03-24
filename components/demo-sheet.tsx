@@ -74,10 +74,10 @@ export function DemoSheet({
             variant="outline"
             className="w-full"
             onClick={() => {
-              if (sheet && typeof sheet.closeSheet === 'function') {
+              if (sheet && typeof sheet.closeSheet === "function") {
                 // Get the sheet ID from the instance context
                 const sheetId = `demo-sheet-${level}`;
-                sheet.closeSheet(sheetId);
+                sheet.closeSheet();
               }
             }}
           >
