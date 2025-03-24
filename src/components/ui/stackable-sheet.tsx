@@ -9,7 +9,7 @@ import {
   type HTMLAttributes,
 } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
-import { ArrowLeftIcon, X } from "lucide-react";
+import { X } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
@@ -103,10 +103,10 @@ export function SheetProvider({
   );
 }
 
-export function useSheet() {
+function useSheetContext() {
   const context = useContext(SheetContext);
   if (!context) {
-    throw new Error("useSheet must be used within a SheetProvider");
+    throw new Error("useSheetContext must be used within a SheetProvider");
   }
   return context;
 }
@@ -114,21 +114,45 @@ export function useSheet() {
 interface StackableSheetProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   trigger?: ReactNode;
-  title?: string;
-  description?: string;
   side?: "top" | "right" | "bottom" | "left";
   baseSize?: number;
   stackSpacing?: number;
   viewportPadding?: number;
 }
 
+interface StackableSheetHeaderProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+}
+
+interface StackableSheetContentProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+}
+
+interface StackableSheetFooterProps extends HTMLAttributes<HTMLDivElement> {
+  children: ReactNode;
+}
+
+interface StackableSheetCloseProps extends HTMLAttributes<HTMLButtonElement> {
+  children?: ReactNode;
+}
+
+interface CurrentSheetContextValue {
+  id: string;
+  isOpen: boolean;
+  isTop: boolean;
+  isFirst: boolean;
+  close: () => void;
+}
+
+const CurrentSheetContext = createContext<CurrentSheetContextValue | undefined>(undefined);
+
 const sheetVariants = cva(
   "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-400 data-[state=open]:duration-400 transition-all duration-400",
   {
     variants: {
       side: {
-        right: "max-w-[95vw] inset-y-0 right-0 h-full border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
-        left: "max-w-[95vw] inset-y-0 left-0 h-full border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
+        right: "inset-y-0 right-0 h-full border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+        left: "inset-y-0 left-0 h-full border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
         top: "inset-x-0 top-0 w-full border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
         bottom: "inset-x-0 bottom-0 w-full border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
       },
@@ -181,7 +205,6 @@ function getSheetDimensions(
   const maxOffset = getMaxOffset(side, baseSize, viewportPadding);
   const clampedOffset = Math.min(offsetAmount, maxOffset);
 
-  // For top/bottom variants, we use height-based stacking
   if (side === "top" || side === "bottom") {
     return {
       width: "100vw",
@@ -190,18 +213,79 @@ function getSheetDimensions(
     };
   }
 
-  // For left/right variants, we use width-based stacking
   return {
     width: `${baseSize}px`,
     ...(isClosing ? {} : { transform: getTransformValue(side, clampedOffset) }),
   };
 }
 
-export function StackableSheet({
+function StackableSheetHeader({
+  children,
+  className,
+  ...props
+}: StackableSheetHeaderProps) {
+  return (
+    <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function StackableSheetContent({
+  children,
+  className,
+  ...props
+}: StackableSheetContentProps) {
+  return (
+    <div className={cn("py-4", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function StackableSheetFooter({
+  children,
+  className,
+  ...props
+}: StackableSheetFooterProps) {
+  return (
+    <div className={cn("mt-auto", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function StackableSheetClose({
+  children,
+  className,
+  ...props
+}: StackableSheetCloseProps) {
+  
+  return (
+    <Dialog.Close
+      className={cn(
+        "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary",
+        className
+      )}
+      {...props}
+    >
+      {children ?? <X className="size-4" />}
+      <span className="sr-only">Close</span>
+    </Dialog.Close>
+  );
+}
+
+function useSheet() {
+  const context = useContext(CurrentSheetContext);
+  if (!context) {
+    throw new Error("useSheet must be used within a StackableSheet");
+  }
+  return context;
+}
+
+function StackableSheet({
   children,
   trigger,
-  title,
-  description,
   side = "right",
   baseSize: sheetBaseSize,
   stackSpacing: sheetStackSpacing,
@@ -221,7 +305,7 @@ export function StackableSheet({
     baseSize: contextBaseSize,
     stackSpacing: contextStackSpacing,
     viewportPadding: contextViewportPadding,
-  } = useSheet();
+  } = useSheetContext();
 
   useEffect(() => {
     if (open) {
@@ -260,58 +344,57 @@ export function StackableSheet({
 
   const sheetStyle = getSheetStyles();
 
+  const currentSheetValue = {
+    id: sheetId,
+    isOpen: open,
+    isTop,
+    isFirst,
+    close: () => handleOpenChange(false),
+  };
+
   return (
-    <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-      {trigger && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
-      <Dialog.Portal>
-        {isFirst && (
-          <Dialog.Overlay 
-            className={cn(
-              "fixed inset-0 z-30 bg-background/80 backdrop-blur-sm",
-              "data-[state=open]:animate-in data-[state=closed]:animate-out",
-              "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-              "transition-all duration-400"
-            )}
-          />
-        )}
-        <Dialog.Content
-          {...props}
-          className={cn(sheetVariants({ side }), className)}
-          style={sheetStyle}
-          onPointerDownOutside={(e) => {
-            if (!isTop) {
-              e.preventDefault();
-            }
-          }}
-          onInteractOutside={(e) => {
-            if (!isTop) {
-              e.preventDefault();
-            }
-          }}
-        >
-          {(title || description) && (
-            <div className="flex flex-col space-y-2 text-center sm:text-left">
-              {title && (
-                <Dialog.Title className="text-lg font-semibold text-foreground">
-                  {title}
-                </Dialog.Title>
+    <CurrentSheetContext.Provider value={currentSheetValue}>
+      <Dialog.Root open={open} onOpenChange={handleOpenChange}>
+        {trigger && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
+        <Dialog.Portal>
+          {isFirst && (
+            <Dialog.Overlay 
+              className={cn(
+                "fixed inset-0 z-30 bg-background/80 backdrop-blur-sm",
+                "data-[state=open]:animate-in data-[state=closed]:animate-out",
+                "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+                "transition-all duration-400"
               )}
-              {description && (
-                <Dialog.Description className="text-sm text-muted-foreground">
-                  {description}
-                </Dialog.Description>
-              )}
-            </div>
+            />
           )}
-
-          <div className={cn("py-4")}>{children}</div>
-
-          <Dialog.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-            {isFirst ? <X className="size-4" /> : <ArrowLeftIcon className="size-4" />}
-            <span className="sr-only">Close</span>
-          </Dialog.Close>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+          <Dialog.Content
+            {...props}
+            className={cn(sheetVariants({ side }), className)}
+            style={sheetStyle}
+            onPointerDownOutside={(e) => {
+              if (!isTop) {
+                e.preventDefault();
+              }
+            }}
+            onInteractOutside={(e) => {
+              if (!isTop) {
+                e.preventDefault();
+              }
+            }}
+          >
+            {children}
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </CurrentSheetContext.Provider>
   );
 }
+
+export {
+  useSheet,
+  StackableSheet,
+  StackableSheetHeader,
+  StackableSheetContent,
+  StackableSheetFooter,
+  StackableSheetClose,
+};

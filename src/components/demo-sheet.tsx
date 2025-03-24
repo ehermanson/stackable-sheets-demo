@@ -1,5 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { StackableSheet, useSheet } from "@/components/ui/stackable-sheet";
+import { 
+  StackableSheet, 
+  StackableSheetHeader, 
+  StackableSheetContent, 
+  StackableSheetFooter,
+  StackableSheetClose,
+  useSheet
+} from "@/components/ui/stackable-sheet";
+import * as Dialog from "@radix-ui/react-dialog";
 
 interface DemoSheetProps {
   level: number;
@@ -18,8 +26,6 @@ export function DemoSheet({
   title = `Level ${level} Sheet`,
   description = `This is a level ${level} sheet in the stack`,
 }: DemoSheetProps) {
-  const sheet = useSheet();
-
   return (
     <StackableSheet
       trigger={
@@ -27,42 +33,72 @@ export function DemoSheet({
           Open {title}
         </Button>
       }
-      title={title}
-      description={description}
       side={side}
       baseSize={baseSize}
       stackSpacing={stackSpacing}
     >
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <h3 className="text-lg font-medium">Sheet Content</h3>
-          <p>
-            This is the content for level {level} sheet. You can add any content
-            here.
-          </p>
-          {level === 1 && (
-            <p className="text-sm text-muted-foreground">
-              This is the first level sheet. Try opening the next level to see
-              how sheets stack.
-            </p>
-          )}
-        </div>
+      <DemoSheetContent 
+        level={level} 
+        side={side} 
+        stackSpacing={stackSpacing}
+        title={title}
+        description={description}
+      />
+    </StackableSheet>
+  );
+}
 
-        <DemoSheet level={level + 1} side={side} stackSpacing={stackSpacing} />
+function DemoSheetContent({
+  level,
+  side,
+  stackSpacing,
+  title,
+  description,
+}: DemoSheetProps) {
+  const { close, isFirst } = useSheet();
+
+  return (
+    <>
+      <StackableSheetHeader>
+        <Dialog.Title className="text-lg font-semibold text-foreground">
+          {title}
+        </Dialog.Title>
+        <Dialog.Description className="text-sm text-muted-foreground">
+          {description}
+        </Dialog.Description>
+      </StackableSheetHeader>
+
+      <StackableSheetContent>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <h3 className="text-lg font-medium">Sheet Content</h3>
+            <p>
+              This is the content for level {level} sheet. You can add any content
+              here.
+            </p>
+            {isFirst && (
+              <p className="text-sm text-muted-foreground">
+                This is the first level sheet. Try opening the next level to see
+                how sheets stack.
+              </p>
+            )}
+          </div>
+
+          <DemoSheet level={level + 1} side={side} stackSpacing={stackSpacing} />
+        </div>
+      </StackableSheetContent>
+
+      <StackableSheetFooter>
         <Button
           variant="outline"
           className="w-full"
-          onClick={() => {
-            if (sheet && typeof sheet.closeSheet === "function") {
-              // Get the sheet ID from the instance context
-              const sheetId = `demo-sheet-${level}`;
-              sheet.closeSheet(sheetId);
-            }
-          }}
+          onClick={close}
         >
           Close This Sheet
         </Button>
-      </div>
-    </StackableSheet>
+      </StackableSheetFooter>
+
+      <StackableSheetClose />
+    </>
   );
 }

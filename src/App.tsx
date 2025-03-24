@@ -51,7 +51,7 @@ export default function App() {
               </div>
 
               <div className="space-y-3">
-                <Label className="text-base">Base Width: {baseSize}px</Label>
+                <Label className="text-base">Base Size: {baseSize}px</Label>
                 <Slider
                   defaultValue={[baseSize]}
                   min={300}
