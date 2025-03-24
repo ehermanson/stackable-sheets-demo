@@ -1,12 +1,11 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { StackableSheet, useSheet } from "@/components/ui/stackable-sheet";
 
 interface DemoSheetProps {
   level: number;
   side: "left" | "right";
-  baseWidth?: number;
-  stackOffset?: number;
+  baseSize?: number;
+  stackSpacing?: number;
   title?: string;
   description?: string;
 }
@@ -14,8 +13,8 @@ interface DemoSheetProps {
 export function DemoSheet({
   level,
   side,
-  baseWidth,
-  stackOffset,
+  baseSize,
+  stackSpacing,
   title = `Level ${level} Sheet`,
   description = `This is a level ${level} sheet in the stack`,
 }: DemoSheetProps) {
@@ -31,8 +30,8 @@ export function DemoSheet({
       title={title}
       description={description}
       side={side}
-      baseWidth={baseWidth}
-      stackOffset={stackOffset}
+      baseSize={baseSize}
+      stackSpacing={stackSpacing}
     >
       <div className="space-y-6">
         <div className="space-y-2">
@@ -49,7 +48,7 @@ export function DemoSheet({
           )}
         </div>
 
-        <DemoSheet level={level + 1} side={side} stackOffset={stackOffset} />
+        <DemoSheet level={level + 1} side={side} stackSpacing={stackSpacing} />
         <Button
           variant="outline"
           className="w-full"

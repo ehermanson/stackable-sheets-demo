@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 import { SheetProvider } from "@/components/ui/stackable-sheet";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -7,13 +6,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { DemoSheet } from "@/components/demo-sheet";
 
-export default function Home() {
+export default function App() {
   const [side, setSide] = useState<"left" | "right">("right");
-  const [baseWidth, setBaseWidth] = useState(750);
-  const [stackOffset, setStackOffset] = useState(32);
+  const [baseSize, setBaseSize] = useState(750);
+  const [stackSpacing, setStackSpacing] = useState(32);
 
   return (
-    <SheetProvider baseWidth={baseWidth} stackOffset={stackOffset}>
+    <SheetProvider baseSize={baseSize} stackSpacing={stackSpacing}>
       <div className="container mx-auto py-10">
         <h1 className="text-3xl font-bold mb-8">Stackable Sheets Demo</h1>
 
@@ -40,31 +39,39 @@ export default function Home() {
                     <RadioGroupItem value="right" id="right" />
                     <Label htmlFor="right">Right</Label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="top" id="top" />
+                    <Label htmlFor="top">Top</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="bottom" id="bottom" />
+                    <Label htmlFor="bottom">Bottom</Label>
+                  </div>
                 </RadioGroup>
               </div>
 
               <div className="space-y-3">
-                <Label className="text-base">Base Width: {baseWidth}px</Label>
+                <Label className="text-base">Base Width: {baseSize}px</Label>
                 <Slider
-                  defaultValue={[baseWidth]}
+                  defaultValue={[baseSize]}
                   min={300}
                   max={1500}
                   step={1}
-                  onValueChange={(value: number[]) => setBaseWidth(value[0])}
+                  onValueChange={(value: number[]) => setBaseSize(value[0])}
                   className="w-full"
                 />
               </div>
 
               <div className="space-y-3">
                 <Label className="text-base">
-                  Stack Offset: {stackOffset}px
+                  Stack Spacing: {stackSpacing}px
                 </Label>
                 <Slider
-                  defaultValue={[stackOffset]}
+                  defaultValue={[stackSpacing]}
                   min={0}
                   max={200}
                   step={1}
-                  onValueChange={(value: number[]) => setStackOffset(value[0])}
+                  onValueChange={(value: number[]) => setStackSpacing(value[0])}
                   className="w-full"
                 />
               </div>
