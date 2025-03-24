@@ -8,25 +8,21 @@ import { Slider } from "@/components/ui/slider";
 import { DemoSheet } from "@/components/demo-sheet";
 
 export default function Home() {
-  // Sheet configuration state
   const [side, setSide] = useState<"left" | "right">("right");
   const [baseWidth, setBaseWidth] = useState(500);
   const [widthIncrement, setWidthIncrement] = useState(24);
-  const [maxLevel, setMaxLevel] = useState(5);
 
   return (
     <SheetProvider baseWidth={baseWidth} widthIncrement={widthIncrement}>
       <div className="container mx-auto py-10">
         <h1 className="text-3xl font-bold mb-8">Stackable Sheets Demo</h1>
 
-        {/* Control Panel */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Configuration</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Side Selection */}
               <div className="space-y-3">
                 <Label className="text-base">Sheet Position</Label>
                 <RadioGroup
@@ -47,7 +43,6 @@ export default function Home() {
                 </RadioGroup>
               </div>
 
-              {/* Base Width */}
               <div className="space-y-3">
                 <Label className="text-base">Base Width: {baseWidth}px</Label>
                 <Slider
@@ -60,7 +55,6 @@ export default function Home() {
                 />
               </div>
 
-              {/* Width Increment */}
               <div className="space-y-3">
                 <Label className="text-base">
                   Width Increment: {widthIncrement}px
@@ -82,10 +76,9 @@ export default function Home() {
 
         <h2 className="text-xl font-semibold mb-4">Demo</h2>
         <p className="text-muted-foreground mb-4">
-          This example uses a recursive component to create up to {maxLevel}{" "}
-          levels of sheets.
+          This example uses a recursive component to create stackable sheets.
         </p>
-        <DemoSheet level={1} maxLevel={maxLevel} side={side} />
+        <DemoSheet level={1} side={side} />
       </div>
     </SheetProvider>
   );
