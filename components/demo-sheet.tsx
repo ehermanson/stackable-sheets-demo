@@ -6,7 +6,7 @@ interface DemoSheetProps {
   level: number;
   side: "left" | "right";
   baseWidth?: number;
-  widthIncrement?: number;
+  stackOffset?: number;
   title?: string;
   description?: string;
 }
@@ -15,7 +15,7 @@ export function DemoSheet({
   level,
   side,
   baseWidth,
-  widthIncrement,
+  stackOffset,
   title = `Level ${level} Sheet`,
   description = `This is a level ${level} sheet in the stack`,
 }: DemoSheetProps) {
@@ -32,7 +32,7 @@ export function DemoSheet({
       description={description}
       side={side}
       baseWidth={baseWidth}
-      widthIncrement={widthIncrement}
+      stackOffset={stackOffset}
     >
       <div className="space-y-6">
         <div className="space-y-2">
@@ -49,11 +49,7 @@ export function DemoSheet({
           )}
         </div>
 
-        <DemoSheet
-          level={level + 1}
-          side={side}
-          widthIncrement={widthIncrement}
-        />
+        <DemoSheet level={level + 1} side={side} stackOffset={stackOffset} />
         <Button
           variant="outline"
           className="w-full"

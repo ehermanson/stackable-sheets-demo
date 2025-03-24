@@ -9,7 +9,6 @@ import {
   type ReactNode,
   useId,
   type HTMLAttributes,
-  useMemo,
 } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { ArrowLeftIcon, X } from "lucide-react";
@@ -32,7 +31,7 @@ interface SheetContextValue {
   isTopSheet: (id: string) => boolean;
   isFirstSheet: (id: string) => boolean;
   baseWidth: number;
-  widthIncrement: number;
+  stackOffset: number;
 }
 
 const SheetContext = createContext<SheetContextValue | undefined>(undefined);
@@ -52,11 +51,11 @@ const SheetInstanceContext = createContext<
 export function SheetProvider({
   children,
   baseWidth = 500,
-  widthIncrement = 24,
+  stackOffset = 32,
 }: {
   children: ReactNode;
   baseWidth?: number;
-  widthIncrement?: number;
+  stackOffset?: number;
 }) {
   // State to track all sheets in the stack
   const [sheets, setSheets] = useState<SheetInfo[]>([]);
@@ -125,7 +124,7 @@ export function SheetProvider({
         isTopSheet,
         isFirstSheet,
         baseWidth,
-        widthIncrement,
+        stackOffset,
       }}
     >
       {children}
@@ -152,7 +151,7 @@ interface StackableSheetProps extends HTMLAttributes<HTMLDivElement> {
   description?: string;
   side?: "top" | "right" | "bottom" | "left";
   baseWidth?: number;
-  widthIncrement?: number;
+  stackOffset?: number;
 }
 
 const sheetVariants = cva(
@@ -181,7 +180,7 @@ export function StackableSheet({
   description,
   side = "right",
   baseWidth: sheetBaseWidth,
-  widthIncrement: sheetWidthIncrement,
+  stackOffset: sheetWidthIncrement,
   className,
   ...props
 }: StackableSheetProps) {
@@ -195,7 +194,7 @@ export function StackableSheet({
     isFirstSheet,
     sheets,
     baseWidth: contextBaseWidth,
-    widthIncrement: contextWidthIncrement,
+    stackOffset: contextWidthIncrement,
   } = useSheet();
 
   // Add sheet to context when opened
@@ -215,7 +214,7 @@ export function StackableSheet({
   const baseWidth =
     sheetBaseWidth !== undefined ? sheetBaseWidth : contextBaseWidth;
 
-  const widthIncrement =
+  const stackOffset =
     sheetWidthIncrement !== undefined
       ? sheetWidthIncrement
       : contextWidthIncrement;
@@ -265,7 +264,7 @@ export function StackableSheet({
     // Sheets higher in the stack (lower positionInOpenSheets) have smaller offsets
     // Sheets lower in the stack (higher positionInOpenSheets) have larger offsets
     const reversedPosition = openSheets.length - positionInOpenSheets - 1;
-    const offsetAmount = (reversedPosition * widthIncrement) / 2; // Divide by 2 because we offset from both sides
+    const offsetAmount = reversedPosition * stackOffset;
 
     if (side === "right") {
       return {

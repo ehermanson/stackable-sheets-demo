@@ -9,11 +9,11 @@ import { DemoSheet } from "@/components/demo-sheet";
 
 export default function Home() {
   const [side, setSide] = useState<"left" | "right">("right");
-  const [baseWidth, setBaseWidth] = useState(500);
-  const [widthIncrement, setWidthIncrement] = useState(24);
+  const [baseWidth, setBaseWidth] = useState(750);
+  const [stackOffset, setStackOffset] = useState(32);
 
   return (
-    <SheetProvider baseWidth={baseWidth} widthIncrement={widthIncrement}>
+    <SheetProvider baseWidth={baseWidth} stackOffset={stackOffset}>
       <div className="container mx-auto py-10">
         <h1 className="text-3xl font-bold mb-8">Stackable Sheets Demo</h1>
 
@@ -57,16 +57,14 @@ export default function Home() {
 
               <div className="space-y-3">
                 <Label className="text-base">
-                  Width Increment: {widthIncrement}px
+                  Stack Offset: {stackOffset}px
                 </Label>
                 <Slider
-                  defaultValue={[widthIncrement]}
+                  defaultValue={[stackOffset]}
                   min={0}
                   max={200}
                   step={1}
-                  onValueChange={(value: number[]) =>
-                    setWidthIncrement(value[0])
-                  }
+                  onValueChange={(value: number[]) => setStackOffset(value[0])}
                   className="w-full"
                 />
               </div>
