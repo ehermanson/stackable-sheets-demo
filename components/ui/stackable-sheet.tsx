@@ -36,18 +36,6 @@ interface SheetContextValue {
 
 const SheetContext = createContext<SheetContextValue | undefined>(undefined);
 
-// Sheet Instance Context (for the current sheet)
-interface SheetInstanceContextValue {
-  closeSheet: () => void;
-  isTopSheet: () => boolean;
-  isFirstSheet: () => boolean;
-  currentSheetId: string;
-}
-
-const SheetInstanceContext = createContext<
-  SheetInstanceContextValue | undefined
->(undefined);
-
 export function SheetProvider({
   children,
   baseWidth = 500,
