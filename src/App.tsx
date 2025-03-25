@@ -10,7 +10,7 @@ import { Button } from "./components/ui/button";
 export default function App() {
   const [side, setSide] = useState<"left" | "right">("right");
   const [baseSize, setBaseSize] = useState(750);
-  const [stackSpacing, setStackSpacing] = useState(32);
+  const [stackSpacing, setStackSpacing] = useState(24);
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -18,10 +18,17 @@ export default function App() {
     <StackableSheetProvider baseSize={baseSize} stackSpacing={stackSpacing}>
       <div className="container mx-auto py-10">
         <h1 className="text-3xl font-bold mb-8">Stackable Sheets Demo</h1>
-
+        <p className="text-muted-foreground mb-6">
+          Demo of a{" "}
+          <code className="bg-muted px-1 rounded">StackableSheet</code>{" "}
+          component, built with{" "}
+          <code className="bg-muted px-1 rounded">@radix/ui</code> primitives in
+          the style of <code className="bg-muted px-1 rounded">@shadcn/ui</code>{" "}
+          components.
+        </p>
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Configuration</CardTitle>
+            <CardTitle>Settings</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -32,7 +39,7 @@ export default function App() {
                   onValueChange={(value: string) =>
                     setSide(value as "left" | "right")
                   }
-                  className="flex flex-col space-y-1"
+                  className="flex flex-col space-y-1 mt-3"
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="left" id="left" />
@@ -53,19 +60,22 @@ export default function App() {
                 </RadioGroup>
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-base">Base Size: {baseSize}px</Label>
+              <div>
+                <Label className="text-base">
+                  Base Size: {baseSize}px{" "}
+                  <span className="text-muted-foreground text-sm">(sheets max out at 95vw)</span>
+                </Label>
                 <Slider
                   defaultValue={[baseSize]}
                   min={300}
                   max={1500}
                   step={1}
                   onValueChange={(value: number[]) => setBaseSize(value[0])}
-                  className="w-full"
+                  className="w-full mt-3"
                 />
               </div>
 
-              <div className="space-y-3">
+              <div>
                 <Label className="text-base">
                   Stack Spacing: {stackSpacing}px
                 </Label>
@@ -75,7 +85,7 @@ export default function App() {
                   max={200}
                   step={1}
                   onValueChange={(value: number[]) => setStackSpacing(value[0])}
-                  className="w-full"
+                  className="w-full mt-3"
                 />
               </div>
             </div>
@@ -86,10 +96,13 @@ export default function App() {
         <p className="text-muted-foreground mb-4">
           This example uses a recursive component to create stackable sheets.
         </p>
-        <Button onClick={() => setIsOpen(true)}>
-          Open Sheet
-        </Button>
-        <DemoSheet level={1} side={side} open={isOpen} onOpenChange={setIsOpen} />
+        <Button onClick={() => setIsOpen(true)}>Open Sheet</Button>
+        <DemoSheet
+          level={1}
+          side={side}
+          open={isOpen}
+          onOpenChange={setIsOpen}
+        />
       </div>
     </StackableSheetProvider>
   );

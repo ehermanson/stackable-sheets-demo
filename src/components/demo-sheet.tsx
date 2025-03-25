@@ -8,7 +8,7 @@ import {
   StackableSheetTitle,
   StackableSheetDescription,
   StackableSheetDefaultHeader,
-  useSheet
+  useSheet,
 } from "@/components/ui/stackable-sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "./ui/carousel";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "./ui/carousel";
 import { Card, CardContent } from "./ui/card";
 import { useMemo } from "react";
 import { ReactNode } from "react";
@@ -38,7 +44,7 @@ interface DemoSheetProps {
 }
 
 interface DemoContent {
-  layout: 'simple' | 'form' | 'cards' | 'carousel' | 'mixed';
+  layout: "simple" | "form" | "cards" | "carousel" | "mixed";
   paragraphs: string[];
   cards: Array<{ title: string; content: string }>;
 }
@@ -85,25 +91,29 @@ function DemoSheetContent({
 }: DemoSheetProps) {
   const { close, isFirst } = useSheet();
 
-  const content = useMemo<DemoContent>(() => ({
-    layout: getRandomLayout(),
-    paragraphs: generateRandomParagraphs(4, 10),
-    cards: generateRandomCards(8, 12),
-  }), []);
+  const content = useMemo<DemoContent>(
+    () => ({
+      layout: getRandomLayout(),
+      paragraphs: generateRandomParagraphs(4, 10),
+      cards: generateRandomCards(8, 12),
+    }),
+    []
+  );
 
   return (
     <>
       {isFirst ? (
-        <StackableSheetDefaultHeader title={title ?? "Sheet Title"} description={description ?? "Sheet Description"} />
+        <StackableSheetDefaultHeader
+          title={title ?? "Sheet Title"}
+          description={description ?? "Sheet Description"}
+        />
       ) : (
         <StackableSheetHeader className="border-b flex items-start">
           <>
             <div>
-              <StackableSheetTitle>
-                {title}
-              </StackableSheetTitle>
+              <StackableSheetTitle>{title}</StackableSheetTitle>
               <StackableSheetDescription>
-                {description}
+                {description}. Composed header w/ custom close button.
               </StackableSheetDescription>
             </div>
             <StackableSheetClose className="ml-auto">
@@ -114,56 +124,62 @@ function DemoSheetContent({
       )}
 
       <StackableSheetBody>
-        <div className="space-y-6 pt-4">
+        <div className="space-y-6 pt-4 mb-10">
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Sheet Content</h3>
             <p>
-              This is the content for sheet {level}. You can add any content
-              here.
+              This is the content for sheet {level}.
             </p>
 
             {isFirst && (
-              <p className="text-sm text-muted-foreground">
+              <p>
                 This is the first level sheet. Try opening the next level to see
                 how sheets stack.
               </p>
             )}
           </div>
-
+          <div>
+            <Input
+              type="text"
+              placeholder='Type "close" to close this sheet programmatically'
+              onChange={(e) => {
+                if (e.target.value === "close") {
+                  close();
+                }
+              }}
+            />
+          </div>
           <DemoSheet
             level={level + 1}
             side={side}
             baseSize={baseSize}
             stackSpacing={stackSpacing}
-            trigger={
-              <Button>
-                Another One
-              </Button>
-            }
+            trigger={<Button>Another One</Button>}
           />
         </div>
-
-        {content.layout === 'form' && <FormLayout />}
-        {content.layout === 'cards' && <CardsLayout cards={content.cards} />}
-        {content.layout === 'carousel' && <CarouselLayout />}
-        {content.layout === 'mixed' && (
+        <h3 className="text-lg font-medium">Random Content</h3>
+        {content.layout === "form" && <FormLayout />}
+        {content.layout === "cards" && <CardsLayout cards={content.cards} />}
+        {content.layout === "carousel" && <CarouselLayout />}
+        {content.layout === "mixed" && (
           <>
             <FormLayout />
             <CardsLayout cards={content.cards.slice(0, 2)} />
           </>
         )}
-        {content.layout === 'simple' && (
+        {content.layout === "simple" && (
           <SimpleLayout paragraphs={content.paragraphs} />
         )}
       </StackableSheetBody>
 
       <StackableSheetFooter className="border-t py-4">
-        <Button
-          className="w-full"
-          onClick={close}
-        >
-          Close Sheet
-        </Button>
+        <div className="text-sm text-muted-foreground mb-2 text-center">
+          Compose the <code>StackableSheetClose</code> component to close the
+          current sheet.
+        </div>
+        <StackableSheetClose asChild>
+          <Button className="w-full">Close Sheet</Button>
+        </StackableSheetClose>
       </StackableSheetFooter>
     </>
   );
@@ -199,7 +215,11 @@ function FormLayout() {
   );
 }
 
-function CardsLayout({ cards }: { cards: Array<{ title: string; content: string }> }) {
+function CardsLayout({
+  cards,
+}: {
+  cards: Array<{ title: string; content: string }>;
+}) {
   return (
     <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2">
       {cards.map((card, index) => (
@@ -251,8 +271,14 @@ function SimpleLayout({ paragraphs }: { paragraphs: string[] }) {
   );
 }
 
-function getRandomLayout(): DemoContent['layout'] {
-  const layouts: DemoContent['layout'][] = ['simple', 'form', 'cards', 'carousel', 'mixed'];
+function getRandomLayout(): DemoContent["layout"] {
+  const layouts: DemoContent["layout"][] = [
+    "simple",
+    "form",
+    "cards",
+    "carousel",
+    "mixed",
+  ];
   return layouts[Math.floor(Math.random() * layouts.length)];
 }
 
@@ -266,12 +292,16 @@ function generateRandomParagraphs(min: number = 2, max: number = 8): string[] {
   ];
 
   const count = Math.floor(Math.random() * (max - min + 1)) + min;
-  return Array.from({ length: count }, () =>
-    paragraphs[Math.floor(Math.random() * paragraphs.length)]
+  return Array.from(
+    { length: count },
+    () => paragraphs[Math.floor(Math.random() * paragraphs.length)]
   );
 }
 
-function generateRandomCards(min: number = 1, max: number = 4): Array<{ title: string; content: string }> {
+function generateRandomCards(
+  min: number = 1,
+  max: number = 4
+): Array<{ title: string; content: string }> {
   const titles = [
     "Product Overview",
     "User Statistics",

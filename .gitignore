@@ -5,6 +5,7 @@
 
 # production
 /build
+/dist
 
 # debug
 npm-debug.log*
@@ -17,3 +18,5 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+.DS_Store

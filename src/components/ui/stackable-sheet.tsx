@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 interface SheetInfo {
   id: string;
   isOpen: boolean;
-  position: number;
 }
 
 interface SheetContextValue {
@@ -47,8 +46,7 @@ function StackableSheetProvider({
 
   const openSheet = useCallback((id: string) => {
     setSheets((prev) => {
-      const newPosition = prev.length;
-      return [...prev, { id, isOpen: true, position: newPosition }];
+      return [...prev, { id, isOpen: true }];
     });
   }, []);
 
