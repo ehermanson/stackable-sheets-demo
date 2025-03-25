@@ -13,6 +13,7 @@ import { X } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
+
 interface SheetInfo {
   id: string;
   isOpen: boolean;
@@ -63,7 +64,7 @@ export function SheetProvider({
         setSheets((currentSheets) =>
           currentSheets.filter((sheet) => sheet.id !== id)
         );
-      }, 300); // Default to 300ms, can be overridden by className
+      }, 300);
 
       return sheetsWithClosingMarked;
     });
@@ -147,14 +148,14 @@ interface CurrentSheetContextValue {
 const CurrentSheetContext = createContext<CurrentSheetContextValue | undefined>(undefined);
 
 const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-400 data-[state=open]:duration-400 transition-all duration-400",
+  "flex flex-col fixed z-50 bg-background shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-400 data-[state=open]:duration-400 transition-all duration-400",
   {
     variants: {
       side: {
-        right: "inset-y-0 right-0 h-full border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
-        left: "inset-y-0 left-0 h-full border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
-        top: "inset-x-0 top-0 w-full border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
-        bottom: "inset-x-0 bottom-0 w-full border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        right: "max-w-[95dvw] inset-y-0 right-0 h-dvh border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+        left: "max-w-[95dvw] inset-y-0 left-0 h-dvh border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
+        top: "max-h-[95dvh] inset-x-0 top-0 w-dvw border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+        bottom: "max-h-[95dvh] inset-x-0 bottom-0 w-dvw border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
       },
     },
     defaultVariants: {
@@ -196,9 +197,9 @@ function getMaxOffset(side: StackableSheetProps["side"], baseSize: number, viewp
 }
 
 function getSheetDimensions(
-  side: StackableSheetProps["side"], 
-  baseSize: number, 
-  offsetAmount: number, 
+  side: StackableSheetProps["side"],
+  baseSize: number,
+  offsetAmount: number,
   viewportPadding: number,
   isClosing: boolean = false
 ) {
@@ -207,7 +208,7 @@ function getSheetDimensions(
 
   if (side === "top" || side === "bottom") {
     return {
-      width: "100vw",
+      width: "100dvw",
       height: `${baseSize}px`,
       ...(isClosing ? {} : { transform: getTransformValue(side, clampedOffset) }),
     };
@@ -225,7 +226,7 @@ function StackableSheetHeader({
   ...props
 }: StackableSheetHeaderProps) {
   return (
-    <div className={cn("flex flex-col space-y-2 text-center sm:text-left", className)} {...props}>
+    <div className={cn("flex px-6 py-4 flex-col space-y-2", className)} {...props}>
       {children}
     </div>
   );
@@ -237,7 +238,7 @@ function StackableSheetContent({
   ...props
 }: StackableSheetContentProps) {
   return (
-    <div className={cn("py-4", className)} {...props}>
+    <div className={cn("flex-1 min-h-0 overflow-y-auto px-6 pb-6", className)} {...props}>
       {children}
     </div>
   );
@@ -249,7 +250,7 @@ function StackableSheetFooter({
   ...props
 }: StackableSheetFooterProps) {
   return (
-    <div className={cn("mt-auto", className)} {...props}>
+    <div className={cn("mt-auto px-6", className)} {...props}>
       {children}
     </div>
   );
@@ -260,7 +261,7 @@ function StackableSheetClose({
   className,
   ...props
 }: StackableSheetCloseProps) {
-  
+
   return (
     <Dialog.Close
       className={cn(
@@ -357,16 +358,16 @@ function StackableSheet({
       <Dialog.Root open={open} onOpenChange={handleOpenChange}>
         {trigger && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
         <Dialog.Portal>
-          {isFirst && (
-            <Dialog.Overlay 
-              className={cn(
-                "fixed inset-0 z-30 bg-background/80 backdrop-blur-sm",
-                "data-[state=open]:animate-in data-[state=closed]:animate-out",
-                "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-                "transition-all duration-400"
-              )}
-            />
-          )}
+          <Dialog.Overlay
+            className={cn(
+              "fixed inset-0 z-30",
+              "data-[state=open]:animate-in data-[state=closed]:animate-out",
+              "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+              "transition-all duration-400",
+              {
+                'bg-black/50 backdrop-blur-sm': isFirst,
+              })}
+          />
           <Dialog.Content
             {...props}
             className={cn(sheetVariants({ side }), className)}
