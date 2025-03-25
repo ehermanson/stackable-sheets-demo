@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "./ui/carousel";
 import { Card, CardContent } from "./ui/card";
+import { useMemo } from "react";
 
 interface DemoSheetProps {
   level: number;
@@ -27,6 +28,12 @@ interface DemoSheetProps {
   stackSpacing?: number;
   title?: string;
   description?: string;
+}
+
+interface DemoContent {
+  layout: 'simple' | 'form' | 'cards' | 'carousel' | 'mixed';
+  paragraphs: string[];
+  cards: Array<{ title: string; content: string }>;
 }
 
 export function DemoSheet({
@@ -70,10 +77,12 @@ function DemoSheetContent({
 }: DemoSheetProps) {
   const { close, isFirst } = useSheet();
 
-  const content = {
-    paragraphs: generateRandomParagraphs(2, 4),
-    cards: generateRandomCards(4, 8),
-  };
+  // Memoize the content so it doesn't change on re-renders
+  const content = useMemo<DemoContent>(() => ({
+    layout: getRandomLayout(),
+    paragraphs: generateRandomParagraphs(4, 10),
+    cards: generateRandomCards(8, 12),
+  }), []); // Empty dependency array means this will only run once when the component mounts
 
   return (
     <>
@@ -111,73 +120,18 @@ function DemoSheetContent({
           />
         </div>
 
-        {/* Form Section */}
-        <div className="mt-8 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" placeholder="Enter your name" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="type">Type</Label>
-            <Select>
-              <SelectTrigger id="type">
-                <SelectValue placeholder="Select type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="type1">Type 1</SelectItem>
-                <SelectItem value="type2">Type 2</SelectItem>
-                <SelectItem value="type3">Type 3</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="mt-8 flex flex-col justify-center items-center gap-4">
-          <Carousel
-            opts={{
-              align: "start",
-            }}
-            className="w-full max-w-sm"
-          >
-            <CarouselContent>
-              {Array.from({ length: 10 }).map((_, index) => (
-                <CarouselItem key={index} className="sm:basis-1/2 md:basis-1/3">
-                  <div className="p-1">
-                    <Card>
-                      <CardContent className="flex aspect-square items-center justify-center p-6">
-                        <span className="text-3xl font-semibold">{index + 1}</span>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
-        </div>
-
-        {/* Text Content */}
-        <div className="mt-8 space-y-4">
-          <h3 className="font-semibold">Additional Information</h3>
-          {content.paragraphs.map((paragraph, index) => (
-            <p key={index} className="text-sm text-muted-foreground">
-              {paragraph}
-            </p>
-          ))}
-        </div>
-
-        <div className="mt-8 space-y-4">
-          {content.cards.map((card, index) => (
-            <Card key={index}>
-              <CardContent>
-                <h4 className="text-lg font-semibold">{card.title}</h4>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
+        {content.layout === 'form' && <FormLayout />}
+        {content.layout === 'cards' && <CardsLayout cards={content.cards} />}
+        {content.layout === 'carousel' && <CarouselLayout />}
+        {content.layout === 'mixed' && (
+          <>
+            <FormLayout />
+            <CardsLayout cards={content.cards.slice(0, 2)} />
+          </>
+        )}
+        {content.layout === 'simple' && (
+          <SimpleLayout paragraphs={content.paragraphs} />
+        )}
       </StackableSheetContent>
 
       <StackableSheetFooter className="border-t py-4">
@@ -194,6 +148,92 @@ function DemoSheetContent({
   );
 }
 
+function FormLayout() {
+  return (
+    <div className="mt-8 space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Name</Label>
+        <Input id="name" placeholder="Enter your name" />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" type="email" placeholder="Enter your email" />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="type">Category</Label>
+        <Select>
+          <SelectTrigger id="type">
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="category1">Category 1</SelectItem>
+            <SelectItem value="category2">Category 2</SelectItem>
+            <SelectItem value="category3">Category 3</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+}
+
+function CardsLayout({ cards }: { cards: Array<{ title: string; content: string }> }) {
+  return (
+    <div className="mt-8 grid gap-4 grid-cols-1 sm:grid-cols-2">
+      {cards.map((card, index) => (
+        <Card key={index}>
+          <CardContent className="p-4">
+            <h4 className="text-lg font-semibold mb-2">{card.title}</h4>
+            <p className="text-sm text-muted-foreground">{card.content}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+function CarouselLayout() {
+  return (
+    <div className="mt-8">
+      <Carousel opts={{ align: "start" }} className="w-full">
+        <CarouselContent>
+          {Array.from({ length: 5 }).map((_, index) => (
+            <CarouselItem key={index} className="sm:basis-1/2 md:basis-1/3">
+              <div className="p-1">
+                <Card>
+                  <CardContent className="flex aspect-square items-center justify-center p-6">
+                    <span className="text-3xl font-semibold">{index + 1}</span>
+                  </CardContent>
+                </Card>
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious />
+        <CarouselNext />
+      </Carousel>
+    </div>
+  );
+}
+
+function SimpleLayout({ paragraphs }: { paragraphs: string[] }) {
+  return (
+    <div className="mt-8 space-y-6">
+      <h3 className="font-semibold">Additional Information</h3>
+      {paragraphs.map((paragraph, index) => (
+        <p key={index} className="text-sm text-muted-foreground">
+          {paragraph}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+function getRandomLayout(): DemoContent['layout'] {
+  const layouts: DemoContent['layout'][] = ['simple', 'form', 'cards', 'carousel', 'mixed'];
+  return layouts[Math.floor(Math.random() * layouts.length)];
+}
 
 function generateRandomParagraphs(min: number = 2, max: number = 8): string[] {
   const paragraphs = [
@@ -211,9 +251,20 @@ function generateRandomParagraphs(min: number = 2, max: number = 8): string[] {
 }
 
 function generateRandomCards(min: number = 1, max: number = 4): Array<{ title: string; content: string }> {
+  const titles = [
+    "Product Overview",
+    "User Statistics",
+    "Recent Activity",
+    "System Status",
+    "Performance Metrics",
+    "Team Updates",
+    "Project Timeline",
+    "Resource Usage",
+  ];
+
   const count = Math.floor(Math.random() * (max - min + 1)) + min;
-  return Array.from({ length: count }, (_, i) => ({
-    title: `Card ${i + 1}`,
-    content: generateRandomParagraphs(1, 4)[0],
+  return Array.from({ length: count }, () => ({
+    title: titles[Math.floor(Math.random() * titles.length)],
+    content: generateRandomParagraphs(1, 1)[0],
   }));
 }
