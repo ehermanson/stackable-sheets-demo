@@ -119,6 +119,8 @@ interface StackableSheetProps extends HTMLAttributes<HTMLDivElement> {
   baseSize?: number;
   stackSpacing?: number;
   viewportPadding?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface StackableSheetHeaderProps extends HTMLAttributes<HTMLDivElement> {
@@ -292,10 +294,17 @@ function StackableSheet({
   stackSpacing: sheetStackSpacing,
   viewportPadding: sheetViewportPadding,
   className,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
   ...props
 }: StackableSheetProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const sheetId = useId();
+
+  // Use controlled state if provided, otherwise use uncontrolled
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = isControlled ? controlledOnOpenChange : setUncontrolledOpen;
 
   const {
     openSheet,
@@ -340,7 +349,7 @@ function StackableSheet({
     if (!isOpen) {
       closeSheet(sheetId);
     }
-    setOpen(isOpen);
+    setOpen?.(isOpen);
   };
 
   const sheetStyle = getSheetStyles();
@@ -372,16 +381,6 @@ function StackableSheet({
             {...props}
             className={cn(sheetVariants({ side }), className)}
             style={sheetStyle}
-            onPointerDownOutside={(e) => {
-              if (!isTop) {
-                e.preventDefault();
-              }
-            }}
-            onInteractOutside={(e) => {
-              if (!isTop) {
-                e.preventDefault();
-              }
-            }}
           >
             {children}
           </Dialog.Content>

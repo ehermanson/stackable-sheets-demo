@@ -5,11 +5,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { DemoSheet } from "@/components/demo-sheet";
+import { Button } from "./components/ui/button";
 
 export default function App() {
   const [side, setSide] = useState<"left" | "right">("right");
   const [baseSize, setBaseSize] = useState(750);
   const [stackSpacing, setStackSpacing] = useState(32);
+
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <SheetProvider baseSize={baseSize} stackSpacing={stackSpacing}>
@@ -83,7 +86,10 @@ export default function App() {
         <p className="text-muted-foreground mb-4">
           This example uses a recursive component to create stackable sheets.
         </p>
-        <DemoSheet level={1} side={side} />
+        <Button onClick={() => setIsOpen(true)}>
+          Open Sheet
+        </Button>
+        <DemoSheet level={1} side={side} open={isOpen} onOpenChange={setIsOpen} />
       </div>
     </SheetProvider>
   );

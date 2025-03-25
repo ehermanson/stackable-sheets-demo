@@ -20,6 +20,7 @@ import {
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "./ui/carousel";
 import { Card, CardContent } from "./ui/card";
 import { useMemo } from "react";
+import { ReactNode } from "react";
 
 interface DemoSheetProps {
   level: number;
@@ -28,6 +29,9 @@ interface DemoSheetProps {
   stackSpacing?: number;
   title?: string;
   description?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  trigger?: ReactNode;
 }
 
 interface DemoContent {
@@ -41,19 +45,20 @@ export function DemoSheet({
   side,
   baseSize,
   stackSpacing,
-  title = `Level ${level} Sheet`,
-  description = `This is a level ${level} sheet in the stack`,
+  title = `Sheet ${level}`,
+  description = `This is sheet ${level} in the stack`,
+  open,
+  onOpenChange,
+  trigger,
 }: DemoSheetProps) {
   return (
     <StackableSheet
-      trigger={
-        <Button>
-          Open {title}
-        </Button>
-      }
+      trigger={trigger}
       side={side}
       baseSize={baseSize}
       stackSpacing={stackSpacing}
+      open={open}
+      onOpenChange={onOpenChange}
     >
       <DemoSheetContent
         level={level}
@@ -100,7 +105,7 @@ function DemoSheetContent({
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Sheet Content</h3>
             <p>
-              This is the content for level {level} sheet. You can add any content
+              This is the content for sheet {level}. You can add any content
               here.
             </p>
 
@@ -117,6 +122,11 @@ function DemoSheetContent({
             side={side}
             baseSize={baseSize}
             stackSpacing={stackSpacing}
+            trigger={
+              <Button>
+                Another One
+              </Button>
+            }
           />
         </div>
 
