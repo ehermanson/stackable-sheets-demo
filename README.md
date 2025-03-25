@@ -2,6 +2,8 @@
 
 Pretty much the shadcn/ui `sheet` component, but stackable.
 
+Demo: https://stackable-sheets-demo.pages.dev/ 
+
 ## Usage
 
 1. Copy and paste `stackable-sheet.tsx`.
