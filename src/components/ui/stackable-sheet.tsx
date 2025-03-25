@@ -4,15 +4,14 @@ import {
   useState,
   useCallback,
   useEffect,
+  useMemo,
   type ReactNode,
   useId,
-  type HTMLAttributes,
 } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-
 
 interface SheetInfo {
   id: string;
@@ -33,7 +32,7 @@ interface SheetContextValue {
 
 const SheetContext = createContext<SheetContextValue | undefined>(undefined);
 
-export function SheetProvider({
+function StackableSheetProvider({
   children,
   baseSize = 500,
   stackSpacing = 32,
@@ -59,7 +58,6 @@ export function SheetProvider({
         sheet.id === id ? { ...sheet, isOpen: false } : sheet
       );
 
-      // Remove the sheet after animation
       setTimeout(() => {
         setSheets((currentSheets) =>
           currentSheets.filter((sheet) => sheet.id !== id)
@@ -112,8 +110,7 @@ function useSheetContext() {
   return context;
 }
 
-interface StackableSheetProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
+interface StackableSheetProps extends DialogPrimitive.DialogContentProps {
   trigger?: ReactNode;
   side?: "top" | "right" | "bottom" | "left";
   baseSize?: number;
@@ -121,22 +118,6 @@ interface StackableSheetProps extends HTMLAttributes<HTMLDivElement> {
   viewportPadding?: number;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
-}
-
-interface StackableSheetHeaderProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-}
-
-interface StackableSheetContentProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-}
-
-interface StackableSheetFooterProps extends HTMLAttributes<HTMLDivElement> {
-  children: ReactNode;
-}
-
-interface StackableSheetCloseProps extends HTMLAttributes<HTMLButtonElement> {
-  children?: ReactNode;
 }
 
 interface CurrentSheetContextValue {
@@ -222,70 +203,6 @@ function getSheetDimensions(
   };
 }
 
-function StackableSheetHeader({
-  children,
-  className,
-  ...props
-}: StackableSheetHeaderProps) {
-  return (
-    <div className={cn("flex px-6 py-4 flex-col space-y-2", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
-function StackableSheetContent({
-  children,
-  className,
-  ...props
-}: StackableSheetContentProps) {
-  return (
-    <div className={cn("flex-1 min-h-0 overflow-y-auto px-6 pb-6", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
-function StackableSheetFooter({
-  children,
-  className,
-  ...props
-}: StackableSheetFooterProps) {
-  return (
-    <div className={cn("mt-auto px-6", className)} {...props}>
-      {children}
-    </div>
-  );
-}
-
-function StackableSheetClose({
-  children,
-  className,
-  ...props
-}: StackableSheetCloseProps) {
-
-  return (
-    <Dialog.Close
-      className={cn(
-        "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary",
-        className
-      )}
-      {...props}
-    >
-      {children ?? <X className="size-4" />}
-      <span className="sr-only">Close</span>
-    </Dialog.Close>
-  );
-}
-
-function useSheet() {
-  const context = useContext(CurrentSheetContext);
-  if (!context) {
-    throw new Error("useSheet must be used within a StackableSheet");
-  }
-  return context;
-}
-
 function StackableSheet({
   children,
   trigger,
@@ -325,13 +242,24 @@ function StackableSheet({
 
   const isTop = isTopSheet(sheetId);
   const isFirst = isFirstSheet(sheetId);
-  const openSheets = sheets.filter((sheet) => sheet.isOpen);
+
+  const openSheets = useMemo(() =>
+    sheets.filter((sheet) => sheet.isOpen),
+    [sheets]
+  );
 
   const baseSize = sheetBaseSize ?? contextBaseSize;
   const stackSpacing = sheetStackSpacing ?? contextStackSpacing;
   const viewportPadding = sheetViewportPadding ?? contextViewportPadding;
 
-  const getSheetStyles = () => {
+  const handleOpenChange = useCallback((isOpen: boolean) => {
+    if (!isOpen) {
+      closeSheet(sheetId);
+    }
+    setOpen?.(isOpen);
+  }, [closeSheet, sheetId, setOpen]);
+
+  const styles = useMemo(() => {
     const currentSheet = sheets.find((sheet) => sheet.id === sheetId);
     if (!currentSheet) return {};
 
@@ -343,31 +271,22 @@ function StackableSheet({
     const offsetAmount = reversedPosition * stackSpacing;
 
     return getSheetDimensions(side, baseSize, offsetAmount, viewportPadding, isClosing);
-  };
+  }, [sheets, sheetId, openSheets, stackSpacing, side, baseSize, viewportPadding]);
 
-  const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      closeSheet(sheetId);
-    }
-    setOpen?.(isOpen);
-  };
-
-  const sheetStyle = getSheetStyles();
-
-  const currentSheetValue = {
+  const currentSheetValue = useMemo(() => ({
     id: sheetId,
     isOpen: open,
     isTop,
     isFirst,
     close: () => handleOpenChange(false),
-  };
+  }), [sheetId, open, isTop, isFirst, handleOpenChange]);
 
   return (
     <CurrentSheetContext.Provider value={currentSheetValue}>
-      <Dialog.Root open={open} onOpenChange={handleOpenChange}>
-        {trigger && <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>}
-        <Dialog.Portal>
-          <Dialog.Overlay
+      <DialogPrimitive.Root open={open} onOpenChange={handleOpenChange}>
+        {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay
             className={cn(
               "fixed inset-0 z-30",
               "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -377,24 +296,123 @@ function StackableSheet({
                 'bg-black/50 backdrop-blur-sm': isFirst,
               })}
           />
-          <Dialog.Content
+          <DialogPrimitive.Content
             {...props}
             className={cn(sheetVariants({ side }), className)}
-            style={sheetStyle}
+            style={styles}
           >
             {children}
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog.Root>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </DialogPrimitive.Root>
     </CurrentSheetContext.Provider>
+  );
+}
+
+function useSheet() {
+  const context = useContext(CurrentSheetContext);
+  if (!context) {
+    throw new Error("useSheet must be used within a StackableSheet");
+  }
+  return context;
+}
+
+function StackableSheetHeader({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("flex px-6 py-4", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function StackableSheetBody({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("flex-1 min-h-0 overflow-y-auto px-6 pb-6", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function StackableSheetFooter({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div className={cn("mt-auto px-6", className)} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function StackableSheetClose({
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Close>) {
+  return <DialogPrimitive.Close {...props} />;
+}
+
+function StackableSheetTitle({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Title>) {
+  return (
+    <DialogPrimitive.Title
+      className={cn("text-lg font-semibold text-foreground", className)}
+      {...props}
+    >
+      {children}
+    </DialogPrimitive.Title>
+  );
+}
+
+function StackableSheetDescription({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<typeof DialogPrimitive.Description>) {
+  return (
+    <DialogPrimitive.Description
+      className={cn("text-sm text-muted-foreground", className)}
+      {...props}
+    >
+      {children}
+    </DialogPrimitive.Description>
+  );
+}
+
+function StackableSheetDefaultHeader({ title, description }: { title: ReactNode, description: ReactNode }) {
+  return (
+    <StackableSheetHeader className="flex items-start border-b">
+      <div>
+        <StackableSheetTitle>{title}</StackableSheetTitle>
+        <StackableSheetDescription>{description}</StackableSheetDescription>
+      </div>
+      <StackableSheetClose className="ml-auto">
+        <X className="size-4" />
+        <span className="sr-only">Close</span>
+      </StackableSheetClose>
+    </StackableSheetHeader>
   );
 }
 
 export {
   useSheet,
+  StackableSheetProvider,
   StackableSheet,
   StackableSheetHeader,
-  StackableSheetContent,
+  StackableSheetBody,
   StackableSheetFooter,
   StackableSheetClose,
+  StackableSheetTitle,
+  StackableSheetDescription,
+  StackableSheetDefaultHeader
 };

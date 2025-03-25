@@ -2,12 +2,14 @@ import { Button } from "@/components/ui/button";
 import {
   StackableSheet,
   StackableSheetHeader,
-  StackableSheetContent,
+  StackableSheetBody,
   StackableSheetFooter,
   StackableSheetClose,
+  StackableSheetTitle,
+  StackableSheetDescription,
+  StackableSheetDefaultHeader,
   useSheet
 } from "@/components/ui/stackable-sheet";
-import * as Dialog from "@radix-ui/react-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,6 +23,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { Card, CardContent } from "./ui/card";
 import { useMemo } from "react";
 import { ReactNode } from "react";
+import { ArrowLeft } from "lucide-react";
 
 interface DemoSheetProps {
   level: number;
@@ -82,25 +85,35 @@ function DemoSheetContent({
 }: DemoSheetProps) {
   const { close, isFirst } = useSheet();
 
-  // Memoize the content so it doesn't change on re-renders
   const content = useMemo<DemoContent>(() => ({
     layout: getRandomLayout(),
     paragraphs: generateRandomParagraphs(4, 10),
     cards: generateRandomCards(8, 12),
-  }), []); // Empty dependency array means this will only run once when the component mounts
+  }), []);
 
   return (
     <>
-      <StackableSheetHeader className="border-b">
-        <Dialog.Title className="text-lg font-semibold text-foreground">
-          {title}
-        </Dialog.Title>
-        <Dialog.Description className="text-sm text-muted-foreground">
-          {description}
-        </Dialog.Description>
-      </StackableSheetHeader>
+      {isFirst ? (
+        <StackableSheetDefaultHeader title={title ?? "Sheet Title"} description={description ?? "Sheet Description"} />
+      ) : (
+        <StackableSheetHeader className="border-b flex items-start">
+          <>
+            <div>
+              <StackableSheetTitle>
+                {title}
+              </StackableSheetTitle>
+              <StackableSheetDescription>
+                {description}
+              </StackableSheetDescription>
+            </div>
+            <StackableSheetClose className="ml-auto">
+              <ArrowLeft className="size-4" />
+            </StackableSheetClose>
+          </>
+        </StackableSheetHeader>
+      )}
 
-      <StackableSheetContent>
+      <StackableSheetBody>
         <div className="space-y-6 pt-4">
           <div className="space-y-2">
             <h3 className="text-lg font-medium">Sheet Content</h3>
@@ -142,18 +155,16 @@ function DemoSheetContent({
         {content.layout === 'simple' && (
           <SimpleLayout paragraphs={content.paragraphs} />
         )}
-      </StackableSheetContent>
+      </StackableSheetBody>
 
       <StackableSheetFooter className="border-t py-4">
         <Button
-          variant="outline"
           className="w-full"
           onClick={close}
         >
           Close Sheet
         </Button>
       </StackableSheetFooter>
-      <StackableSheetClose />
     </>
   );
 }
@@ -205,7 +216,7 @@ function CardsLayout({ cards }: { cards: Array<{ title: string; content: string 
 
 function CarouselLayout() {
   return (
-    <div className="mt-8">
+    <div className="mt-8 px-12">
       <Carousel opts={{ align: "start" }} className="w-full">
         <CarouselContent>
           {Array.from({ length: 5 }).map((_, index) => (

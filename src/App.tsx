@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SheetProvider } from "@/components/ui/stackable-sheet";
+import { StackableSheetProvider } from "@/components/ui/stackable-sheet";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +15,7 @@ export default function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <SheetProvider baseSize={baseSize} stackSpacing={stackSpacing}>
+    <StackableSheetProvider baseSize={baseSize} stackSpacing={stackSpacing}>
       <div className="container mx-auto py-10">
         <h1 className="text-3xl font-bold mb-8">Stackable Sheets Demo</h1>
 
@@ -91,6 +91,6 @@ export default function App() {
         </Button>
         <DemoSheet level={1} side={side} open={isOpen} onOpenChange={setIsOpen} />
       </div>
-    </SheetProvider>
+    </StackableSheetProvider>
   );
 }
