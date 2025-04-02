@@ -126,17 +126,42 @@ interface CurrentSheetContextValue {
   close: () => void;
 }
 
-const CurrentSheetContext = createContext<CurrentSheetContextValue | undefined>(undefined);
+const CurrentSheetContext = createContext<CurrentSheetContextValue | undefined>(
+  undefined
+);
 
 const sheetVariants = cva(
-  "flex will-change-transform will-change-opacity flex-col fixed z-50 bg-background border rounded-xl shadow-lg transition-[transform,opacity] ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-400 data-[state=open]:duration-400",
+  [
+    "flex flex-col fixed z-50 bg-background border rounded-xl shadow-lg",
+    "transition-[transform,opacity] ease-in-out duration-400",
+    "data-[state=open]:animate-in data-[state=closed]:animate-out",
+    "data-[state=closed]:duration-400 data-[state=open]:duration-400",
+    "will-change-transform will-change-opacity",
+    "w-[var(--sheet-width)]",
+    "h-[var(--sheet-height)]",
+    "opacity-[var(--sheet-opacity)]",
+    "transform-[var(--sheet-transform-offset)_scale(var(--sheet-scale))]",
+    "transform-origin-[var(--sheet-transform-origin)",
+  ].join(" "),
   {
     variants: {
       side: {
-        right: "max-w-[95dvw] right-0 data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
-        left: "max-w-[95dvw] left-0 data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
-        top: "max-h-[95dvh] top-0 data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
-        bottom: "max-h-[95dvh] bottom-0 data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        right: [
+          "max-w-[95dvw] right-0 top-[8px] bottom-[8px]",
+          "data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right",
+        ].join(" "),
+        left: [
+          "max-w-[95dvw] left-0 top-[8px] bottom-[8px]",
+          "data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left",
+        ].join(" "),
+        top: [
+          "max-h-[95dvh] top-0 left-[8px] right-[8px]",
+          "data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
+        ].join(" "),
+        bottom: [
+          "max-h-[95dvh] bottom-0 left-[8px] right-[8px]",
+          "data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+        ].join(" "),
       },
     },
     defaultVariants: {
@@ -145,8 +170,19 @@ const sheetVariants = cva(
   }
 );
 
-function getTransformValue(side: StackableSheetProps["side"], offsetAmount: number) {
-  const gap = 8;
+interface CSSCustomProperties extends React.CSSProperties {
+  [key: `--${string}`]: string | number;
+}
+
+function getTransformValue({
+  side,
+  offsetAmount,
+  gap,
+}: {
+  side: StackableSheetProps["side"];
+  offsetAmount: number;
+  gap: number;
+}) {
   switch (side) {
     case "right":
       return `translateX(calc(-${offsetAmount}px - ${gap}px))`;
@@ -161,19 +197,26 @@ function getTransformValue(side: StackableSheetProps["side"], offsetAmount: numb
   }
 }
 
-function getMaxOffset(side: StackableSheetProps["side"], baseSize: number, viewportPadding: number): number {
+function getMaxOffset({
+  side,
+  baseSize,
+  viewportPadding,
+  gap,
+}: {
+  side: StackableSheetProps["side"];
+  baseSize: number;
+  viewportPadding: number;
+  gap: number;
+}) {
   if (typeof window === "undefined") return 0;
 
-  const gap = 8;
   const effectivePadding = viewportPadding + gap;
 
   switch (side) {
     case "right":
-      return Math.max(0, window.innerWidth - baseSize - effectivePadding);
     case "left":
       return Math.max(0, window.innerWidth - baseSize - effectivePadding);
     case "top":
-      return Math.max(0, window.innerHeight - baseSize - effectivePadding);
     case "bottom":
       return Math.max(0, window.innerHeight - baseSize - effectivePadding);
     default:
@@ -181,54 +224,64 @@ function getMaxOffset(side: StackableSheetProps["side"], baseSize: number, viewp
   }
 }
 
-function getSheetDimensions(
-  side: StackableSheetProps["side"],
-  baseSize: number,
-  offsetAmount: number,
-  viewportPadding: number,
-  isClosing: boolean = false,
-  scale: number = 1,
-  opacity: number = 1
-) {
-  const maxOffset = getMaxOffset(side, baseSize, viewportPadding);
+function calculateCssVars({
+  side,
+  baseSize,
+  offsetAmount,
+  viewportPadding,
+  isClosing = false,
+  scale = 1,
+  opacity = 1,
+}: {
+  side: StackableSheetProps["side"];
+  baseSize: number;
+  offsetAmount: number;
+  viewportPadding: number;
+  isClosing?: boolean;
+  scale?: number;
+  opacity?: number;
+}): CSSCustomProperties {
+  const gapFromWindowEdges = 8;
+  const maxOffset = getMaxOffset({
+    side,
+    baseSize,
+    viewportPadding,
+    gap: gapFromWindowEdges,
+  });
   const clampedOffset = Math.min(offsetAmount, maxOffset);
-  const gap = 8;
 
-  if (side === "top" || side === "bottom") {
-    return {
-      width: `calc(100dvw - ${gap * 2}px)`,
-      height: `${baseSize}px`,
-      top: side === "top" ? `0` : undefined,
-      bottom: side === "bottom" ? `0` : undefined,
-      left: `${gap}px`,
-      right: `${gap}px`,
-      opacity: isClosing ? 1 : opacity,
-      ...(isClosing ? {
-        transform: `${getTransformValue(side, 0)} scale(1)`,
-        transformOrigin: side === "top" ? "top center" : "bottom center"
-      } : {
-        transform: `${getTransformValue(side, clampedOffset)} scale(${scale})`,
-        transformOrigin: side === "top" ? "top center" : "bottom center"
-      }),
-    };
-  }
-
-  return {
-    width: `${baseSize}px`,
-    height: `calc(100dvh - ${gap * 2}px)`,
-    top: `${gap}px`,
-    bottom: `${gap}px`,
-    left: side === "left" ? `0` : undefined,
-    right: side === "right" ? `0` : undefined,
-    opacity: isClosing ? 1 : opacity,
-    ...(isClosing ? {
-      transform: `${getTransformValue(side, 0)} scale(1)`,
-      transformOrigin: side === "right" ? "right center" : "left center"
-    } : {
-      transform: `${getTransformValue(side, clampedOffset)} scale(${scale})`,
-      transformOrigin: side === "right" ? "right center" : "left center"
+  const cssProps: CSSCustomProperties = {
+    "--sheet-opacity": isClosing ? 1 : opacity,
+    "--sheet-scale": isClosing ? 1 : scale.toString(),
+    "--sheet-transform-offset": getTransformValue({
+      side,
+      offsetAmount: isClosing ? 0 : clampedOffset,
+      gap: gapFromWindowEdges,
     }),
   };
+
+  if (side === "right") {
+    cssProps["--sheet-transform-origin"] = "right center";
+  } else if (side === "left") {
+    cssProps["--sheet-transform-origin"] = "left center";
+  } else if (side === "top") {
+    cssProps["--sheet-transform-origin"] = "top center";
+  } else if (side === "bottom") {
+    cssProps["--sheet-transform-origin"] = "bottom center";
+  }
+
+  // Set width and height based on the side
+  // For top/bottom sheets, width is full viewport width minus gaps, height is fixed baseSize
+  // For left/right sheets, width is fixed baseSize, height is full viewport height minus gaps
+  if (side === "top" || side === "bottom") {
+    cssProps["--sheet-width"] = `calc(100dvw - ${gapFromWindowEdges * 2}px)`;
+    cssProps["--sheet-height"] = `${baseSize}px`;
+  } else {
+    cssProps["--sheet-width"] = `${baseSize}px`;
+    cssProps["--sheet-height"] = `calc(100dvh - ${gapFromWindowEdges * 2}px)`;
+  }
+
+  return cssProps;
 }
 
 function StackableSheet({
@@ -271,66 +324,87 @@ function StackableSheet({
   const isTop = isTopSheet(sheetId);
   const isFirst = isFirstSheet(sheetId);
 
-  const openSheets = useMemo(() =>
-    sheets.filter((sheet) => sheet.isOpen),
-    [sheets]
-  );
-
   const baseSize = sheetBaseSize ?? contextBaseSize;
   const stackSpacing = sheetStackSpacing ?? contextStackSpacing;
   const viewportPadding = sheetViewportPadding ?? contextViewportPadding;
 
-  const handleOpenChange = useCallback((isOpen: boolean) => {
-    if (!isOpen) {
-      closeSheet(sheetId);
-    }
-    setOpen?.(isOpen);
-  }, [closeSheet, sheetId, setOpen]);
+  const handleOpenChange = useCallback(
+    (isOpen: boolean) => {
+      if (!isOpen) {
+        closeSheet(sheetId);
+      }
+      setOpen?.(isOpen);
+    },
+    [closeSheet, sheetId, setOpen]
+  );
 
-  const styles = useMemo(() => {
+  const cssVars = useMemo(() => {
     const currentSheet = sheets.find((sheet) => sheet.id === sheetId);
     if (!currentSheet) return {};
 
     const isClosing = !currentSheet.isOpen;
+
+    const openSheets = sheets.filter((sheet) => sheet.isOpen);
+
+    // Find this sheet's position in the stack
     const positionInOpenSheets = openSheets.findIndex(
       (sheet) => sheet.id === sheetId
     );
+
+    // Reverse the position to calculate visual stacking
+    // Higher reversedPosition = further back in the stack
     const reversedPosition = openSheets.length - positionInOpenSheets - 1;
 
+    // Limit maximum positions for offset and scale for consistent appearance
     const MAX_OFFSET_POSITION = 4;
     const MAX_SCALE_POSITION = 4;
 
-    const effectiveOffsetPosition = Math.min(reversedPosition, MAX_OFFSET_POSITION);
+    // Calculate offset based on position in stack
+    const effectiveOffsetPosition = Math.min(
+      reversedPosition,
+      MAX_OFFSET_POSITION
+    );
     const offsetAmount = effectiveOffsetPosition * stackSpacing;
 
-    const effectiveScalePosition = Math.min(reversedPosition, MAX_SCALE_POSITION);
-    const scale = Math.max(1 - (effectiveScalePosition * 0.02), 0.9);
+    // Calculate scale based on position in stack (sheets further back are slightly smaller, up to a point)
+    const effectiveScalePosition = Math.min(
+      reversedPosition,
+      MAX_SCALE_POSITION
+    );
+    const scale = Math.max(1 - effectiveScalePosition * 0.02, 0.9);
 
-    const opacity = Math.max(1 - (reversedPosition * 0.05), 0.2);
+    // Calculate opacity based on position in stack.
+    // This is a very subtle effect, we only reduce opacity by 2% per position, with a minimum of 85% opacity.
+    const opacity = Math.max(1 - reversedPosition * 0.02, 0.85);
 
-    return getSheetDimensions(
+    return calculateCssVars({
       side,
       baseSize,
       offsetAmount,
       viewportPadding,
       isClosing,
       scale,
-      opacity
-    );
-  }, [sheets, sheetId, openSheets, stackSpacing, side, baseSize, viewportPadding]);
+      opacity,
+    });
+  }, [sheets, sheetId, stackSpacing, side, baseSize, viewportPadding]);
 
-  const currentSheetValue = useMemo(() => ({
-    id: sheetId,
-    isOpen: open,
-    isTop,
-    isFirst,
-    close: () => handleOpenChange(false),
-  }), [sheetId, open, isTop, isFirst, handleOpenChange]);
+  const currentSheetValue = useMemo(
+    () => ({
+      id: sheetId,
+      isOpen: open,
+      isTop,
+      isFirst,
+      close: () => handleOpenChange(false),
+    }),
+    [sheetId, open, isTop, isFirst, handleOpenChange]
+  );
 
   return (
     <CurrentSheetContext.Provider value={currentSheetValue}>
       <DialogPrimitive.Root open={open} onOpenChange={handleOpenChange}>
-        {trigger && <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>}
+        {trigger && (
+          <DialogPrimitive.Trigger asChild>{trigger}</DialogPrimitive.Trigger>
+        )}
         <DialogPrimitive.Portal>
           <DialogPrimitive.Overlay
             className={cn(
@@ -339,13 +413,17 @@ function StackableSheet({
               "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
               "transition-all duration-400",
               {
-                'bg-black/50 backdrop-blur-sm': isFirst,
-              })}
+                "bg-black/50 backdrop-blur-sm": isFirst,
+              }
+            )}
           />
           <DialogPrimitive.Content
             {...props}
-            className={cn(sheetVariants({ side }), className)}
-            style={styles}
+            className={cn(
+              sheetVariants({ side }),
+              className
+            )}
+            style={cssVars}
           >
             {children}
           </DialogPrimitive.Content>
@@ -381,7 +459,10 @@ function StackableSheetBody({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("flex-1 min-h-0 overflow-y-auto px-6 pb-6", className)} {...props}>
+    <div
+      className={cn("flex-1 min-h-0 overflow-y-auto px-6 pb-6", className)}
+      {...props}
+    >
       {children}
     </div>
   );
@@ -435,7 +516,13 @@ function StackableSheetDescription({
   );
 }
 
-function StackableSheetDefaultHeader({ title, description }: { title: ReactNode, description: ReactNode }) {
+function StackableSheetDefaultHeader({
+  title,
+  description,
+}: {
+  title: ReactNode;
+  description: ReactNode;
+}) {
   return (
     <StackableSheetHeader className="flex items-start border-b">
       <div>
@@ -460,5 +547,5 @@ export {
   StackableSheetClose,
   StackableSheetTitle,
   StackableSheetDescription,
-  StackableSheetDefaultHeader
+  StackableSheetDefaultHeader,
 };
